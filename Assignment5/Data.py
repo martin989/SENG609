@@ -6,7 +6,7 @@ import numpy as np
 from sklearn import preprocessing
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder, MinMaxScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.linear_model import LinearRegression
@@ -48,8 +48,8 @@ class Data():
         lst.append("Total Pay Transformations")
         return lst
 
-    def getDataFrame(self, jobTitle, department, hireDate, benefitsCategory, hours):
-        encoder = joblib.load('encoder.joblib')
+    def getDataFrame(self, jobTitle, department, hireDate, benefitsCategory, hours, enc):
+        encoder = enc
 
         df = pd.DataFrame()
         df.insert(0, 'Job Title', jobTitle)
@@ -66,20 +66,23 @@ class Data():
         df["Full/Part Time"] = df["Full/Part Time"].astype("category")
         df["Hire Date"] = df["Hire Date"].astype("category")
         df.loc[0] = new_row
-        # print(df.head())
 
-        dfd = pd.DataFrame(encoder.transform(df[['Department', 'Full/Part Time', 'Job Title', 'Hire Date']]))
-        df = df.join(dfd)
-        del df['Department']
-        del df['Full/Part Time']
-        del df['Job Title']
-        del df['Hire Date']
+        encoded = enc.transform(df[["Department", "Job Title", "Full/Part Time", "Hire Date"]]).toarray()
+        df[enc.get_feature_names_out()] = encoded
+        print(df.head())
+        df.drop('Department', axis=1, inplace=True)
+        df.drop('Job Title', axis=1, inplace=True)
+        df.drop('Full/Part Time', axis=1, inplace=True)
+        df.drop('Hire Date', axis=1, inplace=True)
         return df
 
     def getLinearRegression(self, jobTitle, department, hireDate, benefitsCategory, hours):
         model = joblib.load('lin_model.pkl')
-        stand_scaler = joblib.load('standscaler.joblib')
-        df = self.getDataFrame(jobTitle, department, hireDate, benefitsCategory, hours)
+        stand_scaler = joblib.load('scaler.joblib')
+        encoder = joblib.load('encoder.joblib')
+        df = self.getDataFrame(jobTitle, department, hireDate, benefitsCategory, hours, encoder)
+        print(df.head())
+
         test_values = model.predict(df)
         predicted_value = test_values[0]
         value = stand_scaler.inverse_transform(predicted_value.reshape(-1, 1))
@@ -100,9 +103,9 @@ class Data():
 
     def getDecisionTree(self, jobTitle, department, hireDate, benefitsCategory, hours):
         model = joblib.load('dec_model.pkl')
+        stand_scaler = joblib.load('scaler.joblib')
         encoder = joblib.load('encoder.joblib')
-        stand_scaler = joblib.load('standscaler.joblib')
-        df = self.getDataFrame(jobTitle, department, hireDate, benefitsCategory, hours)
+        df = self.getDataFrame(jobTitle, department, hireDate, benefitsCategory, hours, encoder)
         test_values = model.predict(df)
         predicted_value = test_values[0]
         value = stand_scaler.inverse_transform(predicted_value.reshape(-1, 1))
@@ -125,31 +128,19 @@ class Data():
     # ColumnTransformer class from sklearn.compose module for transforming one or more categorical features using OneHotEncoder.
     # https://vitalflux.com/one-hot-encoding-concepts-python-code-examples/
     def encodeData(self):
-        self.catDF = self.df.copy()
+        dfEnc = self.df.copy()
+        enc = OneHotEncoder()
 
-        del self.catDF['Benefits Category']
-        del self.catDF['Total Pay']
-        # 1. INSTANTIATE
-        enc = preprocessing.OneHotEncoder(sparse=False, handle_unknown="ignore")
-        onehotlabels = pd.DataFrame(enc.fit_transform(self.catDF))
-
-        # Scaler
-        stand_scaler = preprocessing.MinMaxScaler()
-        x_scaled = stand_scaler.fit_transform(self.df["Total Pay"].values.reshape(-1, 1))
-
-        scaleDF = pd.DataFrame()
-        scaleDF.insert(0, 'Total Pay', x_scaled)
-
-        temp_df1 = onehotlabels.join(scaleDF)
-        # temp_df2 = self.df
-        self.testingDF = temp_df1
+        encoded = enc.fit_transform(dfEnc[["Department", "Job Title", "Full/Part Time", "Hire Date"]]).toarray()
+        dfEnc[enc.get_feature_names_out()] = encoded
+        self.testingDF = dfEnc.drop(["Department", "Job Title", "Full/Part Time", "Hire Date"], axis=1)
         joblib.dump(enc, 'encoder.joblib')
-        joblib.dump(stand_scaler, 'standscaler.joblib')
 
-        del self.testingDF['Department']
-        del self.testingDF['Job Title']
-        del self.testingDF['Full/Part Time']
-        del self.testingDF['Hire Date']
+        mmscaler = MinMaxScaler()
+        cols = ['Total Pay']
+        self.testingDF[cols] = mmscaler.fit_transform(self.testingDF[cols])
+        joblib.dump(mmscaler, 'scaler.joblib')
 
     def getUnique(self, column):
+        self.df.head()
         return self.df[column].unique()
