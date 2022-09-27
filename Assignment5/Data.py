@@ -1,16 +1,12 @@
 import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 import numpy as np
-from sklearn import preprocessing
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder, MinMaxScaler
-from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.linear_model import LinearRegression
-from sklearn import *
 
 
 class Data():
@@ -118,15 +114,10 @@ class Data():
         dtr = DecisionTreeRegressor()
         dtr.fit(xtrain, ytrain)
         joblib.dump(dtr, 'dec_model.pkl')
-        # mse = mean_squared_error(ytest, ypred)
-        # print("MSE: ", mse)
-        # print("RMSE: ", mse ** (1 / 2.0))
         mse_train = mean_absolute_error(ytrain, dtr.predict(xtrain))
         mse_test = mean_absolute_error(ytest, dtr.predict(xtest))
         return [mse_train, mse_test]
 
-    # ColumnTransformer class from sklearn.compose module for transforming one or more categorical features using OneHotEncoder.
-    # https://vitalflux.com/one-hot-encoding-concepts-python-code-examples/
     def encodeData(self):
         dfEnc = self.df.copy()
         enc = OneHotEncoder()

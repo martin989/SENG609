@@ -1,11 +1,6 @@
-import tkinter
 from tkinter import *
-from tkinter import ttk
-from Assignment5.Data import Data
 from ttkwidgets.autocomplete import AutocompleteEntry
 
-
-# https://data.world/city-of-phoenix/2b41f4f8-fe6f-48d3-8097-ad44ee5bd616/workspace/file?filename=employee-compensation-report-calendar-year-2016-1.csv
 
 class Form():
     def __init__(self, root, data):
@@ -20,7 +15,6 @@ class Form():
 
         self.lbl2 = Label(self.root, text='Job Title')
         self.lbl2.place(x=100, y=100)
-        # self.t2 = Entry()
         t2complete = self.data.getUnique("Job Title")
         self.t2 = AutocompleteEntry(self.root, width=15, font=('Times', 12), completevalues=t2complete)
 
@@ -119,7 +113,6 @@ class Form():
         self.lbl34.place(x=300, y=724)
 
     def result(self):
-        # t1_text = self.t1.get()
         t2_text = self.t2.get()
         t3_text = self.t3.get()
         t4_text = self.t4.get()

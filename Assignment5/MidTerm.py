@@ -1,7 +1,6 @@
 from Assignment5.Form import Form
 from Assignment5.Data import Data
 from tkinter import *
-from tkinter import ttk
 
 
 def main():
