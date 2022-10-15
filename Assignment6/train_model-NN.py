@@ -50,6 +50,7 @@ model = Sequential()
 # This is because the first layer in Keras has a special input_shape parameter.
 # This tells Keras that we want three input nodes in the neural network.
 # Instead of declaring the input layer on its own line, this is how Keras specifies the size of the input layer.
+
 model.add(Dense(50, input_dim=3, activation='relu'))
 # Earlier, we talked about hidden layers with four nodes. But in real life, we'll often use hundreds of nodes in a single layer.
 model.add(Dense(50, activation='relu'))
